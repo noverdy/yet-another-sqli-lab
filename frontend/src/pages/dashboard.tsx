@@ -4,17 +4,33 @@ import debounce from '@/utils/debounce';
 import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface Package {
+import PackageCard from '@/components/PackageCard';
+import PurchaseConfirmationModal from '@/components/PurchaseConfirmationModal';
+import SearchBar from '@/components/SearchBar';
+import PackageSkeleton from '@/components/PackageSkeleton';
+import NoPackagesFound from '@/components/NoPackagesFound';
+
+export interface Package {
   id: number;
   name: string;
   description: string;
   price: number;
 }
 
+export interface PurchaseMessage {
+  type: 'success' | 'error';
+  text: string;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [allPackages, setAllPackages] = useState<Package[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [purchaseMessage, setPurchaseMessage] =
+    useState<PurchaseMessage | null>(null);
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -33,7 +49,7 @@ export default function Dashboard() {
     };
 
     fetchPackages();
-  }, []);
+  }, [authFetch]);
 
   const handleSearch = debounce(async (e: ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value.toLowerCase().trim();
@@ -62,6 +78,59 @@ export default function Dashboard() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handleBuyClick = (pkg: Package) => {
+    setSelectedPackage(pkg);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!selectedPackage) return;
+
+    setIsProcessing(true);
+    setPurchaseMessage(null);
+
+    try {
+      const response = await authFetch('/internet-packages/buy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          package_id: selectedPackage.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Purchase failed');
+      }
+
+      setPurchaseMessage({
+        type: 'success',
+        text: `You have successfully purchased ${selectedPackage.name}!`,
+      });
+
+      setTimeout(() => {
+        setShowConfirmation(false);
+        setSelectedPackage(null);
+        setPurchaseMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to purchase package:', error);
+      setPurchaseMessage({
+        type: 'error',
+        text: 'Failed to complete your purchase. Please try again.',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCancelPurchase = () => {
+    setShowConfirmation(false);
+    setSelectedPackage(null);
+    setPurchaseMessage(null);
   };
 
   return (
@@ -117,106 +186,45 @@ export default function Dashboard() {
 
         {/* Search Bar */}
         <div className='mb-8'>
-          <div className='relative rounded-lg shadow-sm max-w-lg'>
-            <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-              <svg
-                className='h-5 w-5 text-gray-400'
-                xmlns='http://www.w3.org/2000/svg'
-                viewBox='0 0 20 20'
-                fill='currentColor'
-              >
-                <path
-                  fillRule='evenodd'
-                  d='M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z'
-                  clipRule='evenodd'
-                />
-              </svg>
-            </div>
-            <input
-              type='text'
-              onChange={handleSearch}
-              className='pl-10 w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 ease-in-out'
-              placeholder='Search packages by name or description...'
-            />
-          </div>
+          <SearchBar onSearch={handleSearch} />
         </div>
 
         {/* Packages Grid */}
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
           {allPackages.length === 0 ? (
+            // Loading state
             Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={`skeleton-${index}`}
-                className='bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md border border-gray-100 relative animate-pulse'
-              >
-                <div className='h-2 bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300'></div>
-                <div className='p-6'>
-                  <div className='h-6 bg-gray-200 rounded w-3/4 mb-4'></div>
-                  <div className='h-4 bg-gray-200 rounded w-full mb-2'></div>
-                  <div className='h-4 bg-gray-200 rounded w-5/6 mb-2'></div>
-                  <div className='h-4 bg-gray-200 rounded w-4/6 mb-4'></div>
-                  <div className='mt-4 flex justify-between items-end'>
-                    <div className='h-8 bg-indigo-200 rounded w-1/3'></div>
-                    <div className='h-8 bg-indigo-100 rounded w-1/4'></div>
-                  </div>
-                </div>
-              </div>
+              <PackageSkeleton key={`skeleton-${index}`} />
             ))
           ) : packages.length > 0 ? (
+            // Packages display
             packages.map((pkg) => (
-              <div
+              <PackageCard
                 key={pkg.id}
-                className='bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100 relative'
-              >
-                <div className='h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'></div>
-                <div className='p-6'>
-                  <h3 className='text-xl font-bold text-gray-900'>
-                    {pkg.name}
-                  </h3>
-                  <p className='mt-2 text-gray-600'>{pkg.description}</p>
-                  <div className='mt-4 flex justify-between items-end'>
-                    <p className='text-2xl font-bold text-indigo-600'>
-                      {formatCurrency(pkg.price)}
-                      <span className='text-sm font-normal text-gray-500'>
-                        /month
-                      </span>
-                    </p>
-                    <button
-                      type='button'
-                      className='inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200'
-                    >
-                      Details
-                    </button>
-                  </div>
-                </div>
-              </div>
+                pkg={pkg}
+                onBuyClick={handleBuyClick}
+                formatCurrency={formatCurrency}
+              />
             ))
           ) : (
-            <div className='col-span-full text-center py-12'>
-              <svg
-                className='mx-auto h-12 w-12 text-gray-400'
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                />
-              </svg>
-              <h3 className='mt-2 text-sm font-medium text-gray-900'>
-                No packages found
-              </h3>
-              <p className='mt-1 text-sm text-gray-500'>
-                Try adjusting your search term.
-              </p>
-            </div>
+            // No packages found
+            <NoPackagesFound />
           )}
         </div>
       </main>
+
+      {/* Purchase Confirmation Modal */}
+      {selectedPackage && (
+        <PurchaseConfirmationModal
+          selectedPackage={selectedPackage}
+          showConfirmation={showConfirmation}
+          isProcessing={isProcessing}
+          purchaseMessage={purchaseMessage}
+          onConfirm={handleConfirmPurchase}
+          onCancel={handleCancelPurchase}
+          formatCurrency={formatCurrency}
+        />
+      )}
 
       {/* Footer */}
       <footer className='relative z-10 bg-white/70 backdrop-blur-sm border-t border-gray-200 py-4 mt-12'>

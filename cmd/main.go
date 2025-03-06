@@ -56,7 +56,9 @@ func main() {
 		startServer()
 	}
 
-	log.Println("No valid command provided. Use --migrate, --rollback, --seed, or --server.")
+	if !*migrate && !*rollback && !*seed && !*server {
+		log.Println("No valid command provided. Use --migrate, --rollback, --seed, or --server.")
+	}
 }
 
 func startServer() {

@@ -1,5 +1,5 @@
 CREATE TABLE internet_packages (
-    id SERIAL PRIMARY KEY,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price NUMERIC(10, 2) NOT NULL,

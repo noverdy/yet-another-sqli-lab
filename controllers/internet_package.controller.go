@@ -2,12 +2,33 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/noverdy/sqli-demo-lab/models"
 	"github.com/noverdy/sqli-demo-lab/services"
 )
+
+func BuyInternetPackage(c *gin.Context) {
+	time.Sleep(1 * time.Second)
+
+	var requestBody struct {
+		ID string `json:"package_id"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	_, err := services.CheckInternetPackageExists(requestBody.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check package"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "The internet package purchase has been processed."})
+}
 
 func GetAllInternetPackages(c *gin.Context) {
 	searchQuery := c.Query("q")
@@ -36,11 +57,7 @@ func CreateInternetPackage(c *gin.Context) {
 }
 
 func UpdateInternetPackage(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package ID"})
-		return
-	}
+	id := c.Param("id")
 
 	var pkg models.InternetPackage
 	if err := c.ShouldBindJSON(&pkg); err != nil {
@@ -48,7 +65,7 @@ func UpdateInternetPackage(c *gin.Context) {
 		return
 	}
 
-	err = services.UpdateInternetPackage(id, pkg)
+	err := services.UpdateInternetPackage(id, pkg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update internet package"})
 		return
@@ -58,13 +75,9 @@ func UpdateInternetPackage(c *gin.Context) {
 }
 
 func DeleteInternetPackage(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package ID"})
-		return
-	}
+	id := c.Param("id")
 
-	err = services.DeleteInternetPackage(id)
+	err := services.DeleteInternetPackage(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete internet package"})
 		return

@@ -14,5 +14,7 @@ func RegisterInternetPackageRoutes(r *gin.RouterGroup) {
 		packages.POST("/", middlewares.AuthMiddleware(), middlewares.AdminMiddleware(), controllers.CreateInternetPackage)
 		packages.PUT("/:id", middlewares.AuthMiddleware(), middlewares.AdminMiddleware(), controllers.UpdateInternetPackage)
 		packages.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.AdminMiddleware(), controllers.DeleteInternetPackage)
+
+		packages.POST("/buy", middlewares.AuthMiddleware(), controllers.BuyInternetPackage)
 	}
 }
