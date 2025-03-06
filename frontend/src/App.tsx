@@ -6,12 +6,13 @@ import {
   Routes,
 } from 'react-router-dom';
 import './index.css';
-import Register from './pages/auth/register';
-import Login from './pages/auth/login';
-import Dashboard from './pages/dashboard';
-import useAuthStore from './stores/authStore';
 import ForgotPassword from './pages/auth/forgot-password';
+import Login from './pages/auth/login';
+import Register from './pages/auth/register';
 import ResetPassword from './pages/auth/reset-password';
+import UserDashboard from './pages/dashboard';
+import useAuthStore from './stores/authStore';
+import AdminDashboard from './pages/admin/dashboard';
 
 export function App() {
   return (
@@ -28,11 +29,20 @@ export function App() {
         </Route>
 
         <Route element={<AuthRoute />}>
-          <Route path='/' element={<Dashboard />} />
+          <Route path='/' element={<UserDashboard />} />
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path='/admin' element={<AdminDashboard />} />
         </Route>
       </Routes>
     </BrowserRouter>
   );
+}
+
+function AdminRoute() {
+  const user = useAuthStore((state) => state.user);
+  return user?.isAdmin ? <Outlet /> : <Navigate to='/auth/login' />;
 }
 
 function AuthRoute() {

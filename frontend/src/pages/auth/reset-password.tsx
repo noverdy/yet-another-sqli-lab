@@ -1,5 +1,6 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import useGlobalStore from '@/stores/globalStore';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -13,7 +14,6 @@ export default function ResetPassword() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    console.log(token);
     if (!token) {
       setError('Invalid or expired password reset link');
     } else {
@@ -44,9 +44,21 @@ export default function ResetPassword() {
     }
 
     setIsLoading(true);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const API_URL = useGlobalStore.getState().API_URL;
+      const response = await fetch(API_URL + '/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          reset_token: token,
+          new_password: formData.password,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error);
+        return;
+      }
 
       setIsSuccess(true);
     } catch (err) {

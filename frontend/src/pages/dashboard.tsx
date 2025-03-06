@@ -1,4 +1,5 @@
 import useAuthStore from '@/stores/authStore';
+import useGlobalStore from '@/stores/globalStore';
 import debounce from '@/utils/debounce';
 import { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -21,10 +22,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchPackages = async () => {
-      const response = await authFetch('/internet-packages/');
-      const data = await response.json();
-      setAllPackages(data);
-      setPackages(data);
+      try {
+        const response = await authFetch('/internet-packages/');
+        const data = await response.json();
+        setAllPackages(data);
+        setPackages(data);
+      } catch (error) {
+        console.error('Failed to fetch packages:', error);
+      }
     };
 
     fetchPackages();
@@ -35,11 +40,15 @@ export default function Dashboard() {
     if (searchTerm === '') {
       setPackages(allPackages);
     } else {
-      const response = await authFetch('/internet-packages/?q=' + searchTerm);
-      const data = await response.json();
-      setPackages(data);
+      try {
+        const response = await authFetch('/internet-packages/?q=' + searchTerm);
+        const data = await response.json();
+        setPackages(data);
+      } catch (error) {
+        console.error('Failed to search packages:', error);
+      }
     }
-  }, 500);
+  }, 200);
 
   const handleLogout = () => {
     logout();
@@ -65,7 +74,7 @@ export default function Dashboard() {
           <div className='flex justify-between items-center py-4'>
             <div>
               <h1 className='text-2xl font-bold text-gray-900'>
-                Internet Packages
+                {useGlobalStore.getState().APP_NAME} Internet Packages
               </h1>
             </div>
 
@@ -134,7 +143,26 @@ export default function Dashboard() {
 
         {/* Packages Grid */}
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {packages.length > 0 ? (
+          {allPackages.length === 0 ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className='bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md border border-gray-100 relative animate-pulse'
+              >
+                <div className='h-2 bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300'></div>
+                <div className='p-6'>
+                  <div className='h-6 bg-gray-200 rounded w-3/4 mb-4'></div>
+                  <div className='h-4 bg-gray-200 rounded w-full mb-2'></div>
+                  <div className='h-4 bg-gray-200 rounded w-5/6 mb-2'></div>
+                  <div className='h-4 bg-gray-200 rounded w-4/6 mb-4'></div>
+                  <div className='mt-4 flex justify-between items-end'>
+                    <div className='h-8 bg-indigo-200 rounded w-1/3'></div>
+                    <div className='h-8 bg-indigo-100 rounded w-1/4'></div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : packages.length > 0 ? (
             packages.map((pkg) => (
               <div
                 key={pkg.id}
@@ -194,8 +222,8 @@ export default function Dashboard() {
       <footer className='relative z-10 bg-white/70 backdrop-blur-sm border-t border-gray-200 py-4 mt-12'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <p className='text-center text-sm text-gray-500'>
-            &copy;{new Date().getFullYear()} Internet Service Provider. All
-            rights reserved.
+            &copy; {new Date().getFullYear()}{' '}
+            {useGlobalStore.getState().APP_NAME}. All rights reserved.
           </p>
         </div>
       </footer>

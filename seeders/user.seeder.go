@@ -14,9 +14,9 @@ func SeedUsers() {
 		Password string
 		IsAdmin  bool
 	}{
-		{"Admin", "admin@example.com", "admin123", true},
-		{"John Doe", "john.doe@example.com", "password123", false},
-		{"Jane Doe", "jane.doe@example.com", "password123", false},
+		{"Admin", "admin@myseclab.com", "admin123", true},
+		{"John Doe", "john.doe@myseclab.com", "password123", false},
+		{"Jane Doe", "jane.doe@myseclab.com", "password123", false},
 	}
 
 	for _, user := range users {

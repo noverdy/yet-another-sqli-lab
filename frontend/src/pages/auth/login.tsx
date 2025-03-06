@@ -27,7 +27,12 @@ export default function Login() {
 
     const ok = await login(formData.email, formData.password);
     if (ok) {
-      navigate('/');
+      const isAdmin = useAuthStore.getState().user?.isAdmin;
+      if (isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
   };
 

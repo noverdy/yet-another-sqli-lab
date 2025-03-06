@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 
 interface GlobalStore {
+  APP_NAME: string;
   API_URL: string;
 }
 
 const useGlobalStore = create<GlobalStore>(() => ({
-  API_URL: 'http://localhost:8080/api',
+  APP_NAME: 'MySeclab',
+  API_URL: '/api',
 }));
 
 export default useGlobalStore;

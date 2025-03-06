@@ -1,16 +1,12 @@
-import useAuthStore from '@/stores/authStore';
 import useGlobalStore from '@/stores/globalStore';
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const register = useAuthStore((s) => s.register);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const authError = useAuthStore((s) => s.error);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -30,6 +26,7 @@ export default function ForgotPassword() {
       return;
     }
 
+    setIsLoading(true);
     try {
       const API_URL = useGlobalStore.getState().API_URL;
       const response = await fetch(API_URL + '/auth/forgot-password', {
@@ -46,6 +43,8 @@ export default function ForgotPassword() {
       setIsSuccess(true);
     } catch (err) {
       setError('Failed to send reset instructions. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
