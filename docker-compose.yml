@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      PGUSER: ${DB_USER}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: /usr/bin/pg_isready
+      interval: 5s
+      timeout: 5s
+      retries: 120
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db_data:

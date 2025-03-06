@@ -2,6 +2,7 @@ package seeders
 
 import (
 	"log"
+	"math/rand"
 
 	"github.com/noverdy/sqli-demo-lab/db"
 	"golang.org/x/crypto/bcrypt"
@@ -14,8 +15,8 @@ func SeedUsers() {
 		Password string
 		IsAdmin  bool
 	}{
-		{"Admin", "admin@myseclab.com", "admin123", true},
-		{"John Doe", "john.doe@myseclab.com", "password123", false},
+		{"Admin", "admin@myseclab.com", generateRandomString(16), true},
+		{"John Doe", "john.doe@myseclab.com", generateRandomString(16), false},
 		{"Jane Doe", "jane.doe@myseclab.com", "password123", false},
 	}
 
@@ -41,4 +42,13 @@ func SeedUsers() {
 			log.Printf("Seeded user: %s", user.Email)
 		}
 	}
+}
+
+func generateRandomString(n int) string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

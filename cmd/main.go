@@ -33,7 +33,6 @@ func main() {
 			log.Fatalf("Failed to apply migrations: %v", err)
 		}
 		log.Println("Migrations applied successfully!")
-		return
 	}
 
 	if *rollback {
@@ -43,7 +42,6 @@ func main() {
 			log.Fatalf("Failed to rollback migrations: %v", err)
 		}
 		log.Println("Migrations rolled back successfully!")
-		return
 	}
 
 	if *seed {
@@ -51,13 +49,11 @@ func main() {
 		seeders.SeedUsers()
 		seeders.SeedInternetPackages()
 		log.Println("Seeders completed successfully!")
-		return
 	}
 
 	if *server {
 		log.Println("Starting the server...")
 		startServer()
-		return
 	}
 
 	log.Println("No valid command provided. Use --migrate, --rollback, --seed, or --server.")
